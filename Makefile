@@ -152,7 +152,7 @@ endif
 # First set of targets ensure the build/output directories are created and execute
 # in the context of the BUILD directory.
 #---------------------------------------------------------------------------------
-.PHONY : clean all bootstrap 3dsx cia elf 3ds citra release
+.PHONY : clean all bootstrap 3dsx cia elf 3ds azahar release
 
 all : bootstrap
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
@@ -169,7 +169,7 @@ cia : bootstrap
 elf : bootstrap
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile $@
 
-citra : bootstrap
+azahar : bootstrap
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile $@
 
 release : bootstrap
@@ -225,14 +225,14 @@ COMMON_MAKEROM_PARAMS := -rsf $(RSF) -target t -exefslogo -elf $(OUTPUT_FILE).el
 ifeq ($(OS),Windows_NT)
 	MAKEROM = makerom.exe
 	BANNERTOOL = bannertool.exe
-	CITRA = citra.exe
+	AZAHAR = azahar.exe
 	_3DSXTOOL = 3dsxtool.exe
 	SMDHTOOL = smdhtool.exe
 	TEX3DS = tex3ds.exe
 else
 	MAKEROM = makerom
 	BANNERTOOL = bannertool
-	CITRA = citra
+	AZAHAR = azahar
 	_3DSXTOOL = 3dsxtool
 	SMDHTOOL = smdhtool
 	TEX3DS = tex3ds
@@ -241,7 +241,7 @@ endif
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-.PHONY: all 3dsx cia elf 3ds citra release
+.PHONY: all 3dsx cia elf 3ds azahar release
 
 $(OUTPUT_FILE).3dsx : $(OUTPUT_FILE).elf $(_3DSXDEPS)
 	$(_3DSXTOOL) $< $@ $(_3DSXFLAGS)
@@ -288,8 +288,8 @@ cia : $(OUTPUT_FILE).cia
 
 elf : $(OUTPUT_FILE).elf
 
-citra : 3dsx
-	$(CITRA) $(OUTPUT_FILE).3dsx
+azahar : 3dsx
+	"$(AZAHAR_PATH)\$(AZAHAR)" $(OUTPUT_FILE).3dsx
 
 release : $(OUTPUT_FILE).zip cia 3ds
 
