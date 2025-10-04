@@ -1,6 +1,6 @@
 # Compile directories
-build/
-output/
+build/*
+output/*
 
 # Codeblocks
 *.layout
@@ -16,6 +16,7 @@ output/
 *.3dsx
 *.smdh
 *.zip
+*.d
 
 # Precompiled Headers
 *.gch
