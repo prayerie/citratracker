@@ -43,3 +43,6 @@ output/
 
 # Debug files
 *.dSYM/
+*.lst
+
+.vscode/*
