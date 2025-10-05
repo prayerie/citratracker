@@ -1,42 +1,27 @@
 #include <3ds.h>
-#include <citro2d.h>
 #include <stdio.h>
 
-#include "gfx/gfx.h"
 #include "gfx/widget.h"
 
 int main(int argc, char** argv) {
     // #ifdef BUILD_DEBUG
     
     // #endif
-    //    Textures::Init();
-    //    ptmuInit();
-    //    cfguInit();
-    //    dspInit();
-    //    socInit(static_cast<u32 *>(memalign(0x1000, 0x10000)), 0x10000);
-    GFX::Init();
+
+    gfxInitDefault();
     consoleInit(GFX_TOP, NULL);
     printf("hi\n");
-
+    gfxSetDoubleBuffering(GFX_BOTTOM, false);
+    u8 *fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+    
     Widget* w = new Widget(10, 10, 200, 10, true, true);
+
     while (aptMainLoop()) {
-        // gfxFlushBuffers();
-        // gfxSwapBuffers();
-        GFX::FrameBegin();
 
+        if (hidKeysDown() & KEY_START)
+            break;
+        w->pleaseDraw(fb);
         
-        
-
-        // if (hidKeysDown() & KEY_START)
-        //     break;
-        w->pleaseDraw();
-        GFX::FrameEnd();
-
-
-
-
-        
-        // gspWaitForVBlank();
         hidScanInput();
 
         touchPosition touch;
@@ -49,9 +34,14 @@ int main(int argc, char** argv) {
         } else {
             w->untouched();
         }
+
+        gfxFlushBuffers();
+        gfxSwapBuffers();
+
+        gspWaitForVBlank();
     }
 
-    GFX::Exit();
+    gfxExit();
     return 0;
 
 }

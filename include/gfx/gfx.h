@@ -1,5 +1,5 @@
 #pragma once
-// #include <types.h>
+#include <3ds/types.h>
 
 
 namespace GFX {
@@ -10,7 +10,7 @@ namespace GFX {
     };
 
     static C3D_RenderTarget *c3dRenderTarget[TARGET_BOTH];
-    static C2D_TextBuf guiStaticBuf, guiDynamicBuf, guiSizeBuf;
+    // static C2D_TextBuf guiStaticBuf, guiDynamicBuf, guiSizeBuf;
     
     static const u32 guiBgcolour = C2D_Color32(62, 62, 62, 255);
     static const u32 guiStatusBarColour = C2D_Color32(44, 44, 44, 255);
