@@ -13,7 +13,38 @@
 
 Widget::Widget(u16 _x, u16 _y, u16 _width, u16 _height,  bool _visible, bool _occluded)
     : x(_x), y(_y), width(_width), height(_height), enabled(true), visible(_visible), occluded(_occluded), is_touched(false) {
+        occluded = false; //todo change lol
+}
 
+void Widget::getPos(u16 *_x, u16 *_y, u16 *_width, u16 *_height)
+{
+	if (_x != NULL) *_x = x;
+	if (_y != NULL) *_y = y;
+	if (_width != NULL) *_width = width;
+	if (_height != NULL) *_height = height;
+}
+
+void Widget::setPos(u16 _x, u16 _y)
+{
+	x = _x;
+	y = _y;
+}
+
+void Widget::occlude(void)
+{
+	if(isExposed())
+			overdraw();
+	occluded = true;
+}
+
+void Widget::reveal(void)
+{
+	if(occluded)
+	{
+		occluded = false;
+		if(visible)
+			pleaseDraw();
+	}
 }
 
 void Widget::drawBox(u16 tx, u16 ty, u16 tw, u16 th, u32 colour) {
@@ -64,10 +95,6 @@ void Widget::drawFilledBox(u16 tx, u16 ty, u16 tw, u16 th, u32 colour) {
 }
 
 
-void Widget::draw(u8* fb) {
-    drawGradient(is_touched ? 0x00ff00ff : 0x00ff0000, is_touched ? 0x00ff0000 : 0x00ff00ff,  0, 0, width, height);
-    // drawFilledBox(0, 0, width, height, is_touched ? 0xff0000 : 0xff00ff);
-}
 
 void Widget::onVisibilityChanged(bool visible) {
 
@@ -85,8 +112,9 @@ void Widget::drawBorder(u32 colour) {
     drawBox(0, 0, width, height, colour);
 }
 
-void Widget::setTheme(Theme *theme_) {
+void Widget::setTheme(Theme *theme_, u32 bgcolour) {
     theme = theme_;
+    bgColour = bgcolour;
 }
 
 void Widget::setFramebuf(u8 *framebuffer) {
@@ -264,6 +292,28 @@ void Widget::drawString(const char* str, u16 tx, u16 ty, u8 tz, u16 maxwidth, u3
     }
 }
 
+void Widget::drawMonochromeIcon(u16 tx, u16 ty, u16 tw, u16 th, const u8 *icon, u32 colour) {
+	u16 pixelidx = 0;
+	for(u8 j=0;j<th;++j) {
+		for(u8 i=0;i<tw;++i,++pixelidx) {
+			if(icon[pixelidx/8] & BIT(pixelidx%8) ) {
+				drawPixel(tx+i, ty+j, colour);
+			}
+		}
+	}
+}
+
+void Widget::drawMonochromeIconOffset(u16 tx, u16 ty, u16 tw, u16 th, u16 ix, u16 iy, u16 iw, u16 ih, const u8 *icon, u32 colour) {
+	for(u8 j=0;j<th;++j) {
+		u16 pixelidx = ((iy+j) * iw) + ix;
+		for(u8 i=0;i<tw;++i,++pixelidx) {
+			if(icon[pixelidx/8] & BIT(pixelidx%8) ) {
+				drawPixel(tx+i, ty+j, colour);
+			}
+		}
+	}
+}
+
 u32 Widget::getStringWidth(const char *str, u16 limit)
 {
 	u32 res = 0;
@@ -285,4 +335,9 @@ bool Widget::isInRect(u16 x, u16 y, u16 x1, u16 y1, u16 x2, u16 y2)
 bool Widget::isExposed(void)
 {
 	return visible && !occluded;
+}
+
+void Widget::overdraw(void)
+{
+	drawFilledBox(0, 0, width, height, bgColour);
 }
