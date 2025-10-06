@@ -13,7 +13,8 @@
 #include "gfx/numberslider.h"
 #include "gfx/gui.h"
 #include "gfx/piano.h"
-
+#include "gfx/bitbutton.h"
+#include "gfx/bitmaps/icon_flp_raw.h"
 typedef struct
 {
     ModPlugFile *plug;
@@ -115,12 +116,15 @@ int main(int argc, char** argv) {
     gui->setTheme(t, t->col_bg);
     u16 *map_base = new u16[768];
     Piano *kb = new Piano(0, 152, 224, 40, map_base);
+
+    BitButton *buttonswitchsub    = new BitButton(234, 1  , 21, 21, icon_flp_raw, 18, 18);
     // ----------------------------------------
     gui->registerWidget(b, 0, SUB_SCREEN);
     gui->registerWidget(ns, 0, SUB_SCREEN);
     gui->registerWidget(l, 0, SUB_SCREEN);
     gui->registerWidget(l_l, 0, MAIN_SCREEN);
     gui->registerWidget(kb, 0, SUB_SCREEN);
+    gui->registerWidget(buttonswitchsub, 0, SUB_SCREEN);
 
 	// consoleInit(GFX_TOP, NULL);
     // consoleDebugInit(debugDevice_SVC);
@@ -150,7 +154,7 @@ int main(int argc, char** argv) {
 
     ModPlug_SetSettings(&decoder.settings);
 
-    if (false) {
+    if (true) {
         struct stat fileStat;
         stat("romfs:/space_debris.mod", &fileStat);
         size_t bufferSize = fileStat.st_size;
