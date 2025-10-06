@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install prerequisites
+        run: |
+          apt-get update -y
+          wget https://github.com/Epicpkmn11/bannertool/releases/download/v1.2.2/bannertool.zip
+          wget https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.18.3/makerom-v0.18.3-ubuntu_x86_64.zip
+          unzip makerom*.zip
+          unzip bannertool.zip
+          chmod +x makerom
+          chmod +x linux-x86_64/bannertool
+          mv linux-x86_64/bannertool /usr/bin/
+          mv makerom /usr/bin
+
+
+      - name: Build 3dsx
+        run: make 3dsx
+
+      - name: Build cia
+        run: make cia
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CitraTracker
+          path: |
+            output/citratracker.cia
+            output/citratracker.3dsx
+            README.md
