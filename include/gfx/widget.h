@@ -85,17 +85,25 @@ class Widget {
 
             u16 y_ = 240 - y - ty;
             u32 c = (240)*(x+tx)+y_; // 3ds screens are portrait internally
-            u32 cb = c * 3;
-            u32 cg = c * 3 + 1;
-            u32 cr = c * 3 + 2;
-
-            fb[cb] = b;
-            fb[cg] = g;
-            fb[cr] = r;
+            
+            _fbSetRaw(c, r, g, b);
         }
 
         inline void drawPixel(u16 tx, u16 ty, u32 colour, bool wide=false) {
             drawPixel(tx, ty, RED(colour), GREEN(colour), BLUE(colour));
+        }
+
+
+        inline void _fbSetRaw(u32 i, u8 r, u8 g, u8 b) { // DANGEROUS!!!
+            if (fb == NULL)
+                return;
+
+            // if (i < 0 || i > 128000)
+            //     return;
+
+            fb[i * 3] = b;
+            fb[i * 3 + 1] = g;
+            fb[i * 3 + 2] = r;
         }
         bool is_touched;
         bool visible;

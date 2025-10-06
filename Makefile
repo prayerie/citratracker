@@ -37,7 +37,7 @@ TARGET      := $(notdir $(CURDIR))
 BUILD       := build
 SOURCES     := source source/gfx source/gfx/font
 DATA        := data
-INCLUDES    := include include/gfx/font
+INCLUDES    := include include/gfx/font include/libmodplug
 GRAPHICS    := gfx
 OUTPUT      := output
 RESOURCES   := resources
@@ -58,14 +58,14 @@ RSF             := $(TOPDIR)/$(RESOURCES)/template.rsf
 ARCH        := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 COMMON      := -Wall -O2 -mword-relocations -fomit-frame-pointer -ffunction-sections $(ARCH) $(INCLUDE) -D__3DS__
 CFLAGS      := $(COMMON) -std=gnu99
-CXXFLAGS    := $(COMMON) -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS    := $(COMMON) -fno-rtti -fno-exceptions -std=gnu++11 -DDEBUG -fstack-protector-strong
 ASFLAGS     := $(ARCH)
 LDFLAGS     = -specs=3dsx.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #---------------------------------------------------------------------------------
 # Libraries needed to link into the executable.
 #---------------------------------------------------------------------------------
-LIBS := -lcitro2d -lcitro3d -lctru -lm
+LIBS := `$(PREFIX)pkg-config --libs libmodplug` -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

@@ -105,7 +105,6 @@ void Label::draw(void)
 		if(!no_bg)
 			drawFilledBox(0, 0, width, height, col_bg);
 	}
-    printf("A");
 	if(caption) {
 		int caption_width = width - (caption_x_offset * 2);
 		if(right_aligned) {

@@ -1,0 +1,299 @@
+/*====================================================================
+Copyright 2006 Tobias Weyand
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+======================================================================*/
+
+#include <stdio.h>
+#include <string.h>
+
+#include "gfx/piano.h"
+
+#include "gfx/piano.raw.h"
+#include "gfx/piano.pal.h"
+#include "gfx/piano.map.h"
+#include "gfx/piano_hit.h"
+
+#define clamp(v, vmin, vmax) (((v) < (vmin)) ? (vmin) : ((v > (vmax)) ? (vmax) : (v)))
+
+u16 halftones[] = { 1, 3, 6, 8, 10, 13, 15, 18, 20, 22 };
+u16 x_offsets[] = { 0, 11, 16, 27, 32, 48, 59, 64, 75, 80, 91, 96 };
+
+
+/* ===================== PUBLIC ===================== */
+Piano::Piano(u16 _x, u16 _y, u16 _width, u16 _height, u16* _map_base)
+	:Widget(_x, _y, _width, _height),
+	char_base(NULL), map_base(_map_base), key_labels_visible(false), first_draw(true)
+{
+	onNote = 0;
+	onRelease = 0;
+	// dmaCopy((uint16*)piano_Palette, (uint16*)BG_PALETTE_SUB, 32);
+	// dmaCopy((uint16*)piano_fullnotehighlight_Palette, (uint16*)BG_PALETTE_SUB+16, 32);
+	// dmaCopy((uint16*)piano_halfnotehighlight_Palette, (uint16*)BG_PALETTE_SUB+32, 32);
+	// dmaCopy((uint16*)piano_Tiles, char_base, 736);
+
+	memset(key_labels, ' ', 24);
+}
+
+
+// Drawing request
+void Piano::pleaseDraw(void) {
+	draw();
+}
+
+
+// Event calls
+void Piano::penDown(u16 px, u16 py)
+{
+	// Look up the note in the hit-array
+	s16 kbx, kby;
+	kbx = clamp((px - x) / 8, 0, PIANO_WIDTH_TILES - 1);
+	kby = clamp((py - y) / 8, 0, PIANO_HEIGHT_TILES - 1);
+
+	u16 note = piano_hit[kby][kbx];
+
+	setKeyPal(note);
+
+	if (onNote) {
+		onNote(note);
+	}
+
+	curr_note = note;
+	draw();
+
+}
+
+void Piano::penMove(u16 px, u16 py)
+{
+	// Look up the note in the hit-array
+	s16 kbx, kby;
+	kbx = clamp((px - x) / 8, 0, PIANO_WIDTH_TILES - 1);
+	kby = clamp((py - y) / 8, 0, PIANO_HEIGHT_TILES - 1);
+
+	u16 note = piano_hit[kby][kbx];
+
+	// Only when it moves to another note
+	if (note != curr_note) {
+		resetPals();
+		if (onRelease) {
+			onRelease(curr_note, true);
+		}
+
+		setKeyPal(note);
+
+		if (onNote) {
+			onNote(note);
+		}
+
+		curr_note = note;
+
+		draw();
+	}
+}
+
+
+void Piano::penUp(u16 px, u16 py)
+{
+	resetPals();
+
+	if (onRelease)
+	{
+		onRelease(curr_note, false);
+	}
+
+	draw();
+}
+
+// Callback registration
+void Piano::registerNoteCallback(void (*onNote_)(u16)) {
+	onNote = onNote_;
+}
+
+void Piano::registerReleaseCallback(void (*onRelease_)(u16, bool)) {
+	onRelease = onRelease_;
+}
+
+// Key label handling
+void Piano::showKeyLabels(void)
+{
+	key_labels_visible = true;
+
+	for (u16 key = 0; key < 24; ++key)
+		drawKeyLabel(key);
+}
+
+void Piano::hideKeyLabels(void)
+{
+	key_labels_visible = false;
+
+	for (u16 key = 0; key < 24; ++key)
+		eraseKeyLabel(key);
+}
+
+void Piano::setKeyLabel(u16 key, char label)
+{
+	eraseKeyLabel(key);
+
+	key_labels[key] = label;
+
+	drawKeyLabel(key);
+}
+
+/* ===================== PRIVATE ===================== */
+
+void Piano::drawDirect(void)
+{
+	if (first_draw) {
+		drawInit();
+		first_draw = false;
+	}
+	for (u16 py = 0; py < 5; ++py)
+	{
+		for (u16 px = 0; px < 28; ++px)
+		{
+			u16 map_entry = map_base[32 * (py + y / 8) + (px + x / 8)];
+			u16 tile_idx = map_entry & 0x3FF;
+			u16 pal_idx = (map_entry >> 12) & 0x3;
+
+			const u16* pal = (const u16*)piano_Palette;
+			if (pal_idx == 1) pal = (const u16*)piano_fullnotehighlight_Palette;
+			else if (pal_idx == 2) pal = (const u16*)piano_halfnotehighlight_Palette;
+
+			for (u16 tile_y = 0; tile_y < 8; ++tile_y)
+			{
+				u32 row_base = tile_idx * 32 + tile_y * 4;
+
+				for (u16 tile_x = 0; tile_x < 8; ++tile_x)
+				{
+					u16 byte_offset = row_base + (tile_x >> 1);
+					u16 pixel_data = piano_Tiles[byte_offset];
+					u16 colour_idx = (tile_x & 1) ? (pixel_data >> 4) : (pixel_data & 0xF);
+
+					u16 colour15 = pal[colour_idx];
+
+					if (py == 4)
+						drawPixel(px * 8 + tile_x, (7 + py * 8) - tile_y, RED15(colour15), GREEN15(colour15), BLUE15(colour15));
+					else
+						drawPixel(px * 8 + tile_x, py * 8 + tile_y, RED15(colour15), GREEN15(colour15), BLUE15(colour15));
+				}
+			}
+		}
+	}
+}
+
+void Piano::draw(void) {
+	drawDirect();
+}
+
+void Piano::drawInit(void) {
+	// Fill screen with empty tiles
+	u16 i;
+	// for(i=0;i<768;++i) map_base[i] = 28;
+
+	// Copy the piano to the screen
+	u16 px, py;
+	for (py = 0; py < PIANO_HEIGHT_TILES; ++py)
+	{
+		for (px = 0; px < PIANO_WIDTH_TILES; ++px)
+		{
+			map_base[32 * (py + y / 8) + (px + x / 8)] = piano_Map[29 * py + px + 1];
+		}
+	}
+}
+
+// Set the key corresp. to note to palette corresp. to pal_idx
+void Piano::setKeyPal(u16 note)
+{
+	u16 px, py, hit_row, pal_idx;
+	printf("setKeyPal\n");
+
+	if (isHalfTone(note))
+	{
+		hit_row = 0;
+		pal_idx = 2;
+	}
+	else
+	{
+		hit_row = 4;
+		pal_idx = 1;
+	}
+
+	for (px = 0; px < PIANO_WIDTH_TILES; ++px)
+	{
+		if (piano_hit[hit_row][px] == note)
+		{
+			for (py = 0; py < PIANO_HEIGHT_TILES; ++py)
+			{
+				map_base[32 * (py + y / 8) + (px + x / 8)] &= ~(3 << 12); // Clear bits 12 and 13 (from the left)
+				map_base[32 * (py + y / 8) + (px + x / 8)] |= (pal_idx << 12); // Write the pal index to bits 12 and 13
+			}
+		}
+	}
+}
+
+// 1 for halftones, 0 for fulltones
+u16 Piano::isHalfTone(u16 note)
+{
+	u16 i;
+	for (i = 0;i < 10;++i) {
+		if (note == halftones[i]) return 1;
+	}
+	return 0;
+}
+
+// Reset piano colours to normal
+void Piano::resetPals(void)
+{
+	u16 px, py;
+	for (px = 0; px < PIANO_WIDTH_TILES; ++px) {
+		for (py = 0; py < PIANO_HEIGHT_TILES; ++py) {
+			map_base[32 * (py + y / 8) + (px + x / 8)] &= ~(3 << 12); // Clear bits 12 and 13 (from the left)
+		}
+	}
+}
+
+void Piano::drawKeyLabel(u16 key, bool visible)
+{
+	u16 xpos, ypos, offset;
+	u16 col;
+
+	if (isHalfTone(key) == true)
+	{
+		ypos = 12;
+		col = RGB15(31, 31, 31);
+		offset = 3;
+	}
+	else
+	{
+		ypos = 28;
+		col = RGB15(0, 0, 0);
+		offset = 5;
+	}
+
+	if (visible == true)
+		col |= BIT(15);
+
+	xpos = offset + x_offsets[key % 12];
+
+	if (key > 11)
+		xpos += 111;
+
+	char label[] = { key_labels[key], 0 };
+
+	drawString(label, xpos, ypos, 255, col);
+}
+
+void Piano::eraseKeyLabel(u16 key)
+{
+	drawKeyLabel(key, false);
+}
