@@ -82,7 +82,7 @@ void Button::setCaption(const char *_caption) {
 /* ===================== PRIVATE ===================== */
 
 void Button::draw(u8 down) {
-	// if(!isExposed()) return;
+	if(!isExposed()) return;
 	
 	if(enabled)
 	{

@@ -275,8 +275,8 @@ void ListBox::select(u16 idx, bool scroll)
 
 void ListBox::draw(void)
 {
-	// if(!isExposed())
-	// 	return;
+	if(!isExposed())
+		return;
 
 	u16 rows_displayed = (height-1)/ROW_HEIGHT;
 	u16 i;

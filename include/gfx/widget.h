@@ -30,15 +30,19 @@ class Widget {
         }
 
         
-        void show(void) { setVisible(true); }
-        void hide(void) { setVisible(false); }
+        virtual void show(void);
+        virtual void hide(void);
         virtual void occlude(void);
 		virtual void reveal(void);
+        virtual void enable(void);
+		virtual void disable(void);
+        bool isEnabled(void) { return enabled; }
+		bool setEnabled(bool value);
 
         virtual void pleaseDraw(void) {  } // TODO no
         void drawFullBg(void) { drawFilledBox(0, 0, width, height, theme->col_bg); }
         bool isOccluded(void) { return occluded; }
-        bool setOccluded(bool occluded_) { occluded = occluded_; }
+        bool setOccluded(bool occluded_);
         void getPos(u16 *_x, u16 *_y, u16 *_width, u16 *_height);
 		void setPos(u16 _x, u16 _y);
         virtual void penDown(u16 px, u16 py) {};
@@ -48,8 +52,9 @@ class Widget {
 		virtual void buttonRelease(u16 button) {};
         virtual void touched(void);
         virtual void untouched(void);
-        void setTheme(Theme *theme_, u32 bgcolour=RGB15(0, 0, 0));
+        virtual void setTheme(Theme *theme_, u32 bgcolour_);
         void setFramebuf(u8 *framebuffer);
+        void resize(u16 w, u16 h);
     protected:
         u16 x, y;
         u16 width, height;

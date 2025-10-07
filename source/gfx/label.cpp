@@ -74,8 +74,8 @@ char *Label::getCaption(void) {
 
 void Label::draw(void)
 {
-	// if(!isExposed())
-	// 	return;
+	if(!isExposed())
+		return;
 
 	u32 col_bg, col_text;
 	if(is_albino)

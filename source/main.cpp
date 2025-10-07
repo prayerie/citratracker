@@ -15,6 +15,13 @@
 #include "gfx/piano.h"
 #include "gfx/bitbutton.h"
 #include "gfx/bitmaps/icon_flp_raw.h"
+#include "gfx/bitmaps/icon_song_raw.h"
+#include "gfx/bitmaps/icon_disk_raw.h"
+#include "gfx/bitmaps/icon_trumpet_raw.h"
+#include "gfx/bitmaps/icon_wrench_raw.h"
+#include "gfx/bitmaps/icon_sample_raw.h"
+#include "gfx/tabbox.h"
+
 typedef struct
 {
     ModPlugFile *plug;
@@ -93,38 +100,76 @@ int main(int argc, char** argv) {
     Label *l_r = new Label(203, 120, 50, 14);
     NumberSlider *ns = new NumberSlider(105, 60, 32, 17, 12, 1, 256, true);
     ns->setFramebuf(fb_sub);
-    ns->setTheme(t);
+    ns->setTheme(t, t->col_dark_bg);
     
     PrintConsole rightWindow;
     bgg->setFramebuf(fb_main_l);
-    bgg->setTheme(t);
+    bgg->setTheme(t, t->col_dark_bg);
     bggg->setFramebuf(fb_sub);
-    bggg->setTheme(t);
+    bggg->setTheme(t, t->col_dark_bg);
     
-    u16 last_x = 0;
-    u16 last_y = 0;
+    int last_x = 0;
+    int last_y = 0;
     ListBox *l = new ListBox(141, 32, 114, 89, 0x80, true, true, false);
     
     l->setFramebuf(fb_sub);
-    b->setTheme(t);
+    b->setTheme(t, t->col_dark_bg);
     
     bgg->drawFullBg();
     bggg->drawFullBg();
     l_l->setFramebuf(fb_main_l);
-    l_l->setTheme(t);
+    l_l->setTheme(t, t->col_dark_bg);
     l_l->setCaption("hi");  
     gui->setTheme(t, t->col_bg);
     u16 *map_base = new u16[768];
     Piano *kb = new Piano(0, 152, 224, 40, map_base);
 
     BitButton *buttonswitchsub    = new BitButton(234, 1  , 21, 21, icon_flp_raw, 18, 18);
+
+    TabBox *tabbox = new TabBox(1, 1, 139, 151, TABBOX_ORIENTATION_TOP, 16, true, fb_main_l, fb_sub);
+
+    ListBox *lbpot = new ListBox(4, 21, 50, 78, 1, true);
+    lbpot->set(0," 0");
+    // lbpot->registerChangeCallback(handlePotPosChangeFromUser);
+    Button *buttonpotup = new Button(70, 47, 14, 12);
+    buttonpotup->setCaption(">");
+    // buttonpotup->registerPushCallback(handlePotInc);
+    Button *buttonpotdown = new Button(55, 47, 14, 12);
+    buttonpotdown->setCaption("<");
+    // buttonpotdown->registerPushCallback(handlePotDec);
+    Button *buttonins = new Button(55, 21, 29, 12);
+    buttonins->setCaption("ins");
+    // buttonins->registerPushCallback(handlePotIns);
+    Button *buttondel = new Button(55, 60, 29, 12);
+    buttondel->setCaption("del");
+    // buttondel->registerPushCallback(handlePotDel);
+    Button *buttoncloneptn = new Button(55, 34, 29, 12);
+    buttoncloneptn->setCaption("cln");
+    // buttoncloneptn->registerPushCallback(handlePtnClone);
+
+	// tabbox->setTheme(t, t->col_dark_bg);
+	tabbox->addTab(icon_song_raw, 0);
+    tabbox->addTab(icon_disk_raw, 1);
+	tabbox->addTab(icon_sample_raw, 2);
+	tabbox->addTab(icon_trumpet_raw, 3);
+	tabbox->addTab(icon_wrench_raw, 4);
+
+    tabbox->registerWidget(lbpot, 0, 0);
+    tabbox->registerWidget(buttonpotup, 0, 0);
+    tabbox->registerWidget(buttonpotdown, 0, 0);
+    tabbox->registerWidget(buttonins, 0, 0);
+    tabbox->registerWidget(buttondel, 0, 0);
+    tabbox->registerWidget(buttoncloneptn, 0, 0);
+    tabbox->setTheme(t, t->col_dark_bg);
     // ----------------------------------------
+    gui->registerWidget(tabbox, 0, SUB_SCREEN);
     gui->registerWidget(b, 0, SUB_SCREEN);
     gui->registerWidget(ns, 0, SUB_SCREEN);
     gui->registerWidget(l, 0, SUB_SCREEN);
     gui->registerWidget(l_l, 0, MAIN_SCREEN);
     gui->registerWidget(kb, 0, SUB_SCREEN);
     gui->registerWidget(buttonswitchsub, 0, SUB_SCREEN);
+    gui->revealAll();
 
 	// consoleInit(GFX_TOP, NULL);
     // consoleDebugInit(debugDevice_SVC);
@@ -154,7 +199,7 @@ int main(int argc, char** argv) {
 
     ModPlug_SetSettings(&decoder.settings);
 
-    if (true) {
+    if (false) {
         struct stat fileStat;
         stat("romfs:/space_debris.mod", &fileStat);
         size_t bufferSize = fileStat.st_size;
@@ -201,7 +246,7 @@ int main(int argc, char** argv) {
         ndspSetCallback(audioCallback, NULL);
     }
     // ---------------------------------
-    gui->draw();
+    gui->drawSubScreen();
     while (aptMainLoop()) {
         ndspInit();
         romfsInit();
@@ -220,19 +265,22 @@ int main(int argc, char** argv) {
 
             last_x = touch.px;
             last_y = touch.py;
-            gui->penDown(touch.px, touch.py);
+            if (!was_just_touch)
+                gui->penDown(touch.px, touch.py);
             was_just_touch = true;
         } else {
             if (was_just_touch) {
-                redraw_requested = true;
+                // redraw_requested = true;
                 gui->penUp(last_x, last_y);
+                last_x = -255;
+                last_y = -255;
                 was_just_touch = false;
             }
         }
-        if (redraw_requested) {
-            redraw_requested = false;
+        // if (redraw_requested) {
+        //     redraw_requested = false;
             
-        }
+        // }
         gfxFlushBuffers();
         gfxSwapBuffers();
 

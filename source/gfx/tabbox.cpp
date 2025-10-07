@@ -163,7 +163,7 @@ void TabBox::draw(void)
 {
 	u8 size_border = icon_size + 2;
 	u8 size_full = size_border;
-	u16 black = RGB15(0,0,0)|BIT(15);
+	u16 black = RGB15(0,0,0);
 
 	if (orientation == TABBOX_ORIENTATION_TOP) {
 		// Draw box

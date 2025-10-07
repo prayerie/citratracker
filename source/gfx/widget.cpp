@@ -33,8 +33,15 @@ void Widget::setPos(u16 _x, u16 _y)
 void Widget::occlude(void)
 {
 	if(isExposed())
-			overdraw();
+        overdraw();
 	occluded = true;
+}
+
+void Widget::resize(u16 w, u16 h) {
+	overdraw();
+	width = w;
+	height = h;
+	pleaseDraw();
 }
 
 void Widget::reveal(void)
@@ -94,10 +101,57 @@ void Widget::drawFilledBox(u16 tx, u16 ty, u16 tw, u16 th, u32 colour) {
     }
 }
 
+void Widget::enable(void)
+{
+	if(!enabled)
+	{
+		enabled = true;
+		pleaseDraw();
+	}
+}
 
+void Widget::disable(void)
+{
+	if(enabled)
+	{
+		enabled = false;
+		pleaseDraw();
+	}
+}
 
 void Widget::onVisibilityChanged(bool visible) {
 
+}
+
+void Widget::show(void)
+{
+	if(!visible)
+	{
+		visible = true;
+		if(!occluded)
+			pleaseDraw();
+	}
+}
+
+void Widget::hide(void)
+{
+	if(isExposed())
+		overdraw();
+	visible = false;
+}
+
+bool Widget::setOccluded(bool value)
+{
+	bool changed = value != occluded;
+	if (value) occlude(); else reveal();
+	return changed;
+}
+
+bool Widget::setEnabled(bool value)
+{
+	bool changed = value != enabled;
+	if (value) enable(); else disable();
+	return changed;
 }
 
 void Widget::touched(void) {
