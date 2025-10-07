@@ -7,3 +7,9 @@ it is currently very early-stage and only some of the widgets have been ported
 Current progress:
 
 ![screenshot](screenshot.png)
+
+- UI/widgets: mostly
+- sound: no
+- file i/o: no
+- optimisations (eg use 3ds dma where NT uses ds dma): no
+- enhancements: no
