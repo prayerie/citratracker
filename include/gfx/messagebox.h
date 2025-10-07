@@ -40,7 +40,8 @@ class MessageBox: public Widget {
 		
 	private:
 		void draw(void);	
-	
+        u8 *fb_main;
+        u8 *fb_sub;
 		GUI gui;
 		//Label *label;
 		char *msg;

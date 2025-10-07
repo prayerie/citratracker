@@ -86,7 +86,7 @@ const u8 notes_signs[] =   {0 , 1 , 0 , 1 , 0 , 0 , 1 , 0 , 1 , 0 , 1 ,  0};
 class PatternView: public Widget {
 	public:
 		// Constructor sets base variables
-		PatternView(u16 _x, u16 _y, u16 _width, u16 _height, State *_state);
+		PatternView(u16 _x, u16 _y, u16 _width, u16 _height, State *_state, bool three_d);
 		
 		// Drawing request
 		void pleaseDraw(void);
@@ -121,7 +121,8 @@ class PatternView: public Widget {
 		bool isMuted(u16 channel);
 		void unmute(u16 channel);
 		void toggleEffectsVisibility(bool on);
-		
+        bool _3d = false;
+
 	private:
 		void draw(void);
 		

@@ -109,8 +109,8 @@ class Widget {
             if (fb == NULL)
                 return;
 
-            // if (i < 0 || i > 128000)
-            //     return;
+            if (i < 0 || i > 240 * 400)
+                return;
 
             fb[i * 3] = b;
             fb[i * 3 + 1] = g;

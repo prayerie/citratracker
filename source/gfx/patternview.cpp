@@ -33,7 +33,7 @@
 /* ===================== PUBLIC ===================== */
 
 // Constructor sets base variables
-PatternView::PatternView(u16 _x, u16 _y, u16 _width, u16 _height, State *_state)
+PatternView::PatternView(u16 _x, u16 _y, u16 _width, u16 _height, State *_state, bool three_d = false /* temp 3d test */)
 	:Widget(_x, _y, _width, _height),
 	onMute(0), pattern(0), song(0), state(_state),
 	col_lines(RGB15(16,18,24)),
@@ -57,7 +57,7 @@ PatternView::PatternView(u16 _x, u16 _y, u16 _width, u16 _height, State *_state)
 	col_bg(RGB15(4,6,15)),
 	cb_sel_highlight(RGB15(31,24,0)),
 	hscrollpos(0), lines_per_beat(8), selection_exists(false), pen_down(false),
-	effects_visible(false), cell_width(50) // todo show fx
+	effects_visible(false), cell_width(50), _3d(three_d) // todo show fx
 {
 	for(int i=0;i<32;++i)
 	{
@@ -256,7 +256,7 @@ void PatternView::draw(void)
 	s32 sel_screen_x1 = -1, sel_screen_x2 = -1, sel_screen_y1 = -1, sel_screen_y2 = -1;
 
 	// dmaFillWords(colcol, *vram, 192*256*2);
-    // drawFilledBox(0, 0, SCREEN_WIDTH_TOP, SCREEN_HEIGHT, col_bg); // todo NO
+    drawFilledBox(0, 0, SCREEN_WIDTH_TOP, SCREEN_HEIGHT, col_bg); // todo NO
 	
 	// Selection
 	if(selection_exists == true) {
@@ -310,7 +310,7 @@ void PatternView::draw(void)
 	
 	// V-Lines
 	for(u16 i=0;i<=getNumVisibleChannels();++i) {
-		drawVLine(PV_BORDER_WIDTH-1+i*getCellWidth(), 0, width-PV_BORDER_WIDTH, linescol);
+		drawVLine(PV_BORDER_WIDTH-1+i*getCellWidth(), 0, height, linescol);
 	}
 	
 	// Cursor bar (highlight)
@@ -321,7 +321,7 @@ void PatternView::draw(void)
 			&&	(sel_screen_y2 >= PV_CURSORBAR_Y + 1 + PV_CELL_HEIGHT-1)
 			&&	(sel_screen_x1 <= getEffectiveWidth())
 			&&	(sel_screen_x2 >= PV_BORDER_WIDTH)) {
-				s32 cursor_highlight_x1 = std::max((int) sel_screen_x1, PV_BORDER_WIDTH + 1);
+				s32 cursor_highlight_x1 = std::max((int) sel_screen_x1, PV_BORDER_WIDTH + 1) + (_3d ? 4 : 0);
 				drawFilledBox(cursor_highlight_x1, PV_CURSORBAR_Y+1, sel_screen_x2 - cursor_highlight_x1 - 1, PV_CELL_HEIGHT-1, cb_sel_highlight);
 		}
 	}
@@ -392,8 +392,8 @@ void PatternView::draw(void)
 				mute_col1 = cb_col1;
 				mute_col2 = cb_col2;
 			}
-			drawGradient(mute_col1, mute_col2, MUTE_X(i), MUTE_Y, MUTE_WIDTH, MUTE_HEIGHT);
-			drawString("m", PV_BORDER_WIDTH+i*getCellWidth()+9, 0, 0);
+			drawGradient(mute_col1, mute_col2, MUTE_X(i) + (_3d ? 4 : 0), MUTE_Y, MUTE_WIDTH, MUTE_HEIGHT);
+			drawString("m", PV_BORDER_WIDTH+i*getCellWidth()+9 + (_3d ? 4 : 0), 0, 0);
 		}
 		
 		if(solo_channels[chn] == true)

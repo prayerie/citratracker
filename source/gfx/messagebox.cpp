@@ -31,8 +31,11 @@ limitations under the License.
 // Takes a list of alternating button captions and callbacks
 MessageBox::MessageBox(const char *message, u8 n_buttons, u8 *fb_main_, u8 *fb_sub_, ...)
 	:Widget((SCREEN_WIDTH_BOTTOM-MB_MIN_WIDTH)/2, (SCREEN_HEIGHT-MB_HEIGHT)/2, MB_MIN_WIDTH, MB_HEIGHT),
-	n_buttons(n_buttons), gui(fb_main_, fb_sub_)
+	n_buttons(n_buttons), fb_main(fb_main_), fb_sub(fb_sub_)
 {
+    GUI gui(fb_main, fb_sub);
+    gui.setupFramebuffers(fb_main, fb_sub);
+    
 	msg = (char*)calloc(1, strlen(message)+1);
 	strcpy(msg, message);
 

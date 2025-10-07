@@ -11,9 +11,9 @@
 class GUI {
 	public:
 		GUI(u8 *fb_main_, u8 *fb_sub_);
-
+		GUI(void);
 		void setTheme(Theme *theme_, u32 bgcolour_);
-
+		void setupFramebuffers(u8 *fb_main, u8 *fb_sub); // only necessary in special cases
 		void registerWidget(Widget *w, u16 listeningButtons=0, u8 screen = SUB_SCREEN);
 
 		void unregisterWidget(Widget *w);
@@ -53,6 +53,8 @@ class GUI {
 		};
 
 	private:
+		friend class MessageBox;
+		
 		std::vector<Widget*> widgets_main, widgets_sub;
 		std::vector<Widget*> shortcuts;
 		Widget *activeWidget;

@@ -30,6 +30,12 @@ GUI::GUI(u8 *fb_main_, u8 *fb_sub_)
 	}
 }
 
+GUI::GUI() : GUI(NULL, NULL) { }
+
+void GUI::setupFramebuffers(u8 *_fb_main, u8 *_fb_sub) {
+	fb_main = _fb_main;
+	fb_sub = _fb_sub;
+}
 // Sets the theme - mandatory!
 void GUI::setTheme(Theme *theme_, u32 bgcolour_)
 {

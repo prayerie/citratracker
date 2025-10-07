@@ -23,6 +23,7 @@
 #include "gfx/piano.h"
 #include "gfx/tabbox.h"
 #include "gfx/widget.h"
+#include "gfx/messagebox.h"
 
 typedef struct {
     ModPlugFile *plug;
@@ -83,12 +84,15 @@ int main(int argc, char **argv) {
     romfsInit();
     gfxSetDoubleBuffering(GFX_TOP, false);
     gfxSetDoubleBuffering(GFX_BOTTOM, false);
+    // gfxSet3D(true);
 
     u8 *fb_main_l = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-    // u8 *fb_main_r = gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL);
+    u8 *fb_main_r = gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL);
     u8 *fb_sub = gfxGetFramebuffer(GFX_BOTTOM, GFX_RIGHT, NULL, NULL);
+    u8 *fb_main_virt = (u8*) malloc(3 * 400 * 240 * sizeof(u8) + 1); // virtual framebuffers so we don't see weird shit on screen
+    u8 *fb_sub_virt = (u8*) malloc(3 * 320 * 240 * sizeof(u8) + 1);
 
-    GUI *gui = new GUI(fb_main_l, fb_sub);
+    GUI *gui = new GUI(fb_main_virt, fb_sub_virt);
     bool was_just_touch = false;
 
     // ----------------------------------------
@@ -103,25 +107,27 @@ int main(int argc, char **argv) {
     Label *l_l = new Label(200, 120, 50, 14);
     Label *l_r = new Label(203, 120, 50, 14);
     NumberSlider *ns = new NumberSlider(105, 60, 32, 17, 12, 1, 256, true);
-    ns->setFramebuf(fb_sub);
+    ns->setFramebuf(fb_sub_virt);
     ns->setTheme(t, t->col_dark_bg);
 
     PrintConsole rightWindow;
-    bgg->setFramebuf(fb_main_l);
+    bgg->setFramebuf(fb_main_virt);
     bgg->setTheme(t, t->col_dark_bg);
-    bggg->setFramebuf(fb_sub);
+    bggg->setFramebuf(fb_sub_virt);
     bggg->setTheme(t, t->col_dark_bg);
 
     int last_x = 0;
     int last_y = 0;
+
+    int frame = 0;
     ListBox *l = new ListBox(141, 32, 114, 89, 0x80, true, true, false);
 
-    l->setFramebuf(fb_sub);
+    l->setFramebuf(fb_sub_virt);
     b->setTheme(t, t->col_dark_bg);
 
     bgg->drawFullBg();
     bggg->drawFullBg();
-    l_l->setFramebuf(fb_main_l);
+    l_l->setFramebuf(fb_main_virt);
     l_l->setTheme(t, t->col_dark_bg);
     l_l->setCaption("hi");
     gui->setTheme(t, t->col_bg);
@@ -132,7 +138,7 @@ int main(int argc, char **argv) {
         new BitButton(234, 1, 21, 21, icon_flp_raw, 18, 18);
 
     TabBox *tabbox = new TabBox(1, 1, 139, 151, TABBOX_ORIENTATION_TOP, 16,
-                                true, fb_main_l, fb_sub);
+                                true, fb_main_virt, fb_sub_virt);
 
     ListBox *lbpot = new ListBox(4, 21, 50, 78, 1, true);
     lbpot->set(0, " 0");
@@ -154,8 +160,13 @@ int main(int argc, char **argv) {
     // buttoncloneptn->registerPushCallback(handlePtnClone);
     MemoryIndicator *memoryiindicator = new MemoryIndicator(87, 90, 50, 8);
     State *state = new State();
-    PatternView *pv = new PatternView(0, 1, 400, 192, state);
+    PatternView *pv = new PatternView(0, 1, 400, 239, state, false);
     Song *song = new Song();
+    song->channelAdd();
+    song->channelAdd();
+    song->channelAdd();
+    song->channelAdd();
+    song->channelAdd();
     song->channelAdd();
     song->channelAdd();
     song->channelAdd();
@@ -189,6 +200,11 @@ int main(int argc, char **argv) {
     // gui->registerWidget(memoryiindicator, 0, SUB_SCREEN);
 
     pv->setTheme(t, t->col_dark_bg);
+    MessageBox *mb = new MessageBox("one moment", 0, fb_main_virt, fb_sub_virt);
+    mb->setTheme(t, t->col_bg);
+	// gui->registerOverlayWidget(mb, 0, SUB_SCREEN);
+	// mb->show();
+	// mb->pleaseDraw();
     gui->registerWidget(pv, 0, MAIN_SCREEN);
     gui->revealAll();
 
@@ -196,6 +212,7 @@ int main(int argc, char **argv) {
     // consoleDebugInit(debugDevice_SVC);
 
     printf("poo\n");
+    
     // for now using libmodplug for testing purposes only
     // if there are performance issues maybe switch to ported
     // version of libntxm7..?
@@ -268,7 +285,13 @@ int main(int argc, char **argv) {
     // ---------------------------------
     gui->drawSubScreen();
     gui->drawMainScreen();
+    // draw everything 
+    // gui->switchScreens();
+    memcpy(fb_main_l, fb_main_virt, 400 * 240 * 3 * sizeof(u8));
+    memcpy(fb_sub, fb_sub_virt, 240 * 320 * 3 * sizeof(u8));
     while (aptMainLoop()) {
+        pv->_3d = false;
+        // mb->pleaseDraw();
         // fprintf(stderr, "wtf????");
         if (hidKeysDown() & KEY_START) break;
 
@@ -286,6 +309,9 @@ int main(int argc, char **argv) {
             last_y = touch.py;
             if (!was_just_touch) gui->penDown(touch.px, touch.py);
             was_just_touch = true;
+            // pv->updateSelection();
+            // redraw_main_requested = true;
+            gui->drawSubScreen();
         } else {
             if (was_just_touch) {
                 // redraw_requested = true;
@@ -293,10 +319,14 @@ int main(int argc, char **argv) {
                 last_x = -255;
                 last_y = -255;
                 was_just_touch = false;
+                // pv->updateSelection();
+                redraw_main_requested = true;
+
             }
+            gui->drawSubScreen();
         }
         bool fastscroll = hidKeysHeld() & KEY_B;
-        if (hidKeysDown() & KEY_DUP) {
+        if (hidKeysHeld() & KEY_DUP && frame == 0) {
             int newrow = state->getCursorRow();
 
             if (fastscroll == false) {
@@ -311,7 +341,7 @@ int main(int argc, char **argv) {
             pv->updateSelection();
             redraw_main_requested = true;
 
-        } else if (hidKeysDown() & KEY_DDOWN) {
+        } else if (hidKeysHeld() & KEY_DDOWN && frame == 0) {
             int newrow = state->getCursorRow();
 
             if (fastscroll == false) {
@@ -328,13 +358,13 @@ int main(int argc, char **argv) {
             redraw_main_requested = true;
         }
 
-        if ((hidKeysDown() & KEY_DLEFT) && (!false)) {
+        if ((hidKeysHeld() & KEY_DLEFT && frame == 0) && (!false)) { // temp - need a diff way of slowing down input
             if (state->channel > 0) {
                 state->channel--;
                 pv->updateSelection();
                 redraw_main_requested = true;
             }
-        } else if ((hidKeysDown() & KEY_DRIGHT) && (!false)) {
+        } else if ((hidKeysHeld() & KEY_DRIGHT && frame == 0) && (!false)) {
             if (state->channel < song->getChannels() - 1) {
                 state->channel++;
                 pv->updateSelection();
@@ -345,6 +375,16 @@ int main(int argc, char **argv) {
             gui->drawMainScreen();
             redraw_main_requested = false;
         }
+        
+        // if (frame % 2 == 0)
+        memcpy(fb_sub, fb_sub_virt, 400 * 240 * 3 * sizeof(u8));
+        // else
+        memcpy(fb_main_l, fb_main_virt, 240 * 320 * 3 * sizeof(u8));
+        // memcpy(fb_main_r, fb_main_virt, 400 * 240 * 3 * sizeof(u8));
+        frame = (frame + 1) % 4; // simulate 30fps from NT (for now)
+        // pv->setFramebuf(fb_main_r);
+        // pv->_3d = true;
+        // pv->pleaseDraw();
         gfxFlushBuffers();
         gfxSwapBuffers();
 
@@ -357,6 +397,7 @@ int main(int argc, char **argv) {
         linearFree(wavebufs[1].data_pcm16);
     }
 
+    
     romfsExit();
     ndspExit();
     gfxExit();
