@@ -69,6 +69,12 @@ class Widget {
 		void drawHLine(u16 tx, u16 ty, u16 length, u32 colour);
 		void drawVLine(u16 tx, u16 ty, u16 length, u32 colour);
 		void drawBresLine(u16 tx1, u16 ty1, u16 tx2, u16 ty2, u32 col);
+        inline const u32 interpolateColour(u32 colour1, u32 colour2, int alpha /* 0 -> 256 */) {
+            // even though this is the 3ds, we still want to save var alloc and mem when possible!
+            return RGB(RED(colour1) * alpha / 255 + RED(colour2) - RED(colour2) * alpha / 255,
+                GREEN(colour1) * alpha / 255 + GREEN(colour2) - GREEN(colour2) * alpha / 255,
+                BLUE(colour1) * alpha / 255 + BLUE(colour2) - BLUE(colour2) * alpha / 255);
+        }
         bool isInRect(u16 x, u16 y, u16 x1, u16 y1, u16 x2, u16 y2);
         bool isExposed(void);
         u32 getStringWidth(const char *str, u16 limit=USHRT_MAX);

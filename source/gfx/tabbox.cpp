@@ -37,6 +37,9 @@ u8 TabBox::findGuiIdx(u8 tabidx)
 
 void TabBox::addTab(const u8 *icon, u8 tabidx)
 {
+	if (fb_main == NULL || fb_sub == NULL)
+		return;
+		
 	tab_idx_map.push_back(tabidx);
 	icons.push_back(icon);
 	GUI gui(fb_main, fb_sub);
